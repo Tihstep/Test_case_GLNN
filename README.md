@@ -1,12 +1,6 @@
 # Interview task: Graph-less MLP
 Are MLPs can successfully distill graph information and outperform GNN with much faster inference?
 
+# Solution is in the file GLNN_solution.pdf
 
-### Quick start:
- - clone this repo
- - create new env from requirements.txt
- - change path_to_data in main.py
- - run experiment with "python main.py --mode=teacher"
- 
-### Contacts
- Feel free to ask any questions. Telegram: https://t.me/shekhale
+#To run expirements described in solution use one of the "python model_select_experiment.py", "python dropout_experiment.py", "python mlp_2_layers.py"
