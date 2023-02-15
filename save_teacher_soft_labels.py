@@ -7,14 +7,16 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader
 
-path_to_data = '/Users/shekhale/Desktop/DL/graphless_mlp_interview/data/'
+path_to_data = r'C:/Users/Stepan/PycharmProjects/graphless_mlp_interview/data/'
 
 
 def get_args():
+    """Parse configuration arguments from launching command"""
     parser = argparse.ArgumentParser()
 
     parser.add_argument("--device", type=str, default="cpu")
     parser.add_argument("--path_to_data", type=str, default=path_to_data)
+    parser.add_argument("--seed", type=str, default=42)
 
     parser.add_argument("--dataset_name", type=str, default="cora")
     parser.add_argument("--batch_size", type=int, default=64)
@@ -25,7 +27,8 @@ def get_args():
 
 
 def save_soft_labels(args):
-    output_dir = args.path_to_data + 'exp_teacher/'
+    """Save soft labels from GNN model output for further usage in GLNN"""
+    output_dir = args.path_to_data + f'exp_teacher_{args.seed}/'
     path_to_model = output_dir + 'best.pkl'
     assert os.path.exists(path_to_model), "learn model first"
     model = torch.load(path_to_model)

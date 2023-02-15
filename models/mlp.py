@@ -1,4 +1,6 @@
-from torch import nn
+from torch import nn, Tensor
+from typing import Dict
+import torch
 
 
 class MLP(nn.Module):
@@ -9,7 +11,7 @@ class MLP(nn.Module):
                  num_layers=1,
                  dropout_p=0.,
                  use_norm=False,
-                 # task='classification'
+                 emb_size=1
                  ):
         super(MLP, self).__init__()
         assert hidden_dim > 0, "Set up correct hidden dimension"
@@ -17,9 +19,11 @@ class MLP(nn.Module):
         self.dims = [input_dim] + (num_layers - 1) * [hidden_dim] + [output_dim]
         self.dropout = nn.Dropout(p=dropout_p)
 
+        self._fea_value = 2  # How many value feature can get
+        self.embedding = nn.ModuleList([nn.Embedding(self._fea_value, emb_size) for i in range((input_dim // 2))])
+
         self.log_softmax = nn.LogSoftmax(dim=-1)
 
-        # print("mlp  ", input_dim, output_dim)
         self.layers = nn.ModuleList()
         self.norm = nn.Identity()
 
@@ -30,9 +34,16 @@ class MLP(nn.Module):
             self.layers.append(nn.Linear(self.dims[i], self.dims[i + 1]))
             self.layers.append(nn.ReLU())
 
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Dict[str, Tensor]:
+        """input dim: batch_size * input_dim"""
         h_list = []
         h = self.norm(x['h'])
+
+        """
+            emb_half, common_half = torch.tensor_split(h, dim=0)
+            emb_half = [emb(elem) for emb, elem in zip(self.emb, emb_half.T)]
+            h = torch.cat(emb_half + common_half, dim=0)
+        """
 
         for i, layer in enumerate(self.layers):
             h = layer(h)

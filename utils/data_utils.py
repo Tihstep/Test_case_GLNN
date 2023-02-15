@@ -7,14 +7,15 @@ from torch.nn.utils.rnn import pad_sequence
 from collections import defaultdict
 import numpy as np
 import scipy.sparse as sp
+from typing import Tuple, List
 
 
 def get_train_val_test_split(
-    random_state,
-    num_samples,
-    train_size=0.8,
-    val_size=0.1,
-):
+    random_state: int,
+    num_samples: int,
+    train_size: float=0.8,
+    val_size: float=0.1,
+) -> Tuple[List[int], List[int], List[int]]:
 
     remaining_indices = list(range(num_samples))
     train_indices = random_state.choice(
@@ -30,7 +31,7 @@ def get_train_val_test_split(
     return train_indices, val_indices, test_indices
 
 
-def load_data(file_name, seed, do_split=True):
+def load_data(file_name: str, seed: int, do_split: bool=True):
     with np.load(file_name, allow_pickle=True) as loader:
         loader = dict(loader)
         graph_dict = defaultdict(list)
@@ -55,7 +56,7 @@ def load_data(file_name, seed, do_split=True):
     return graph_dict, attr_matrix, labels, split_dict
 
 
-def load_numpy_arr(path_to_read):
+def load_numpy_arr(path_to_read: str) -> np.array:
     arr = None
     if os.path.exists(path_to_read):
         with open(path_to_read, 'rb') as f:
@@ -187,4 +188,16 @@ class StudentLinearDataset(Dataset):
                 }
 
 
-# def node_student_collate_fn(batch):
+def node_student_collate_fn(batch):
+    embs = []
+    labels = []
+    soft_labels = []
+    for el in batch:
+        labels.append(el['labels'])
+        embs.append(el['node_features'])
+        soft_labels.append(el['teacher_soft_labels'])
+    embs = torch.FloatTensor(np.array(embs))
+    labels = torch.LongTensor(labels)
+    soft_labels = torch.FloatTensor(np.array(soft_labels))
+
+    return {'labels': labels, 'h': embs, 'teacher_soft_labels': soft_labels}

@@ -2,7 +2,7 @@ import argparse
 from utils.data_utils import load_data, load_numpy_arr,\
     LinearDataset, node_collate_fn,\
     GraphDataset, graph_collate_fn,\
-    StudentLinearDataset, node_student_collate_fn
+    StudentLinearDataset , node_student_collate_fn
 from models.mlp import MLP
 from models.gnn import GraphModel
 
@@ -15,10 +15,10 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader
 
-path_to_data = '/Users/shekhale/Desktop/DL/graphless_mlp_interview/data/'
-
+path_to_data = r'C:/Users/Stepan/PycharmProjects/graphless_mlp_interview/data/'
 
 def get_args():
+    """Parse configuration arguments from launching command"""
     parser = argparse.ArgumentParser()
 
     parser.add_argument("--device", type=str, default="cpu")
@@ -28,6 +28,7 @@ def get_args():
     parser.add_argument("--mode", type=str, default="teacher")
 
     parser.add_argument("--hidden_dim", type=int, default=128)
+    parser.add_argument("--num_layers", type=int, default=1)
 
     parser.add_argument("--batch_size", type=int, default=4)
     parser.add_argument("--lr", type=float, default=0.0001)
@@ -40,7 +41,13 @@ def get_args():
 
 
 def run_experiment(args):
-    output_dir = args.path_to_data + 'exp_' + args.mode + '/'
+    """
+    Train and eval model defined by "mode"
+
+    :param args: parsed configuration settings
+    :return: None
+    """
+    output_dir = args.path_to_data + f'exp_{args.mode}_{str(args.seed)}/'
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
     else:
@@ -48,7 +55,7 @@ def run_experiment(args):
 
     """ Load data """
     graph_dict, attr_matrix, labels, idx_dict = load_data(args.path_to_data + 'cora.npz', args.seed)
-    path_to_soft_labels = args.path_to_data  + 'exp_teacher/soft_labels.npy'
+    path_to_soft_labels = args.path_to_data + f'exp_teacher_{args.seed}/soft_labels.npy'
     soft_labels = load_numpy_arr(path_to_soft_labels)
 
     label_size = np.max(labels) + 1
@@ -57,19 +64,20 @@ def run_experiment(args):
         Dataset = GraphDataset
         collate_fn = graph_collate_fn
         criterion = TeacherLoss()
-        model = GraphModel(graph_args={"input_dim": attr_matrix.shape[1], "output_dim": args.hidden_dim},
-                       mlp_args={"input_dim": args.hidden_dim, "output_dim": label_size},
-                       )
+        model = GraphModel(
+                    graph_args={"input_dim": attr_matrix.shape[1], "output_dim": args.hidden_dim},
+                    mlp_args={"input_dim": args.hidden_dim, "output_dim": label_size},
+                    )
     elif args.mode == "mlp":
         Dataset = LinearDataset
         collate_fn = node_collate_fn
         criterion = TeacherLoss()
-        model = MLP(input_dim=attr_matrix.shape[1], output_dim=label_size)
+        model = MLP(input_dim=attr_matrix.shape[1], output_dim=label_size, num_layers=args.num_layers)
     elif args.mode == "student_mlp":
         Dataset = StudentLinearDataset
         collate_fn = node_student_collate_fn
         criterion = StudentLoss(1)
-        model = MLP(input_dim=attr_matrix.shape[1], output_dim=label_size)
+        model = MLP(input_dim=attr_matrix.shape[1], output_dim=label_size, num_layers=args.num_layers)
     else:
         assert "Your mode is not implemented"
 
